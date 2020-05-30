@@ -55,7 +55,11 @@ def data():
         query = f"INSERT INTO Link (l_username, g_username) VALUES {values}"
         execute_query(conn, query)
 
-        return str(git_id) + "  is linked to your profile, Login again"
+        values = (git_id, token)
+        query = f"INSERT INTO Token (g_username, token) VALUES {values}"
+        execute_query(conn, query)
+
+        return f"your GitHub id - {str(git_id)} is linked to your profile, Login again"
 
     return str(res.json())
 
@@ -118,6 +122,61 @@ def checkLink(usr):
     else:
         # 0 indicates not found
         return "0"
+
+
+@app.route('/getGitData/<username>')
+def sendData(username):
+    # fetch access token for current username
+    conn = create_connection('test.db')
+    query = f"SELECT token from Token WHERE g_username='{username}'"
+    result = execute_read_query(conn, query)
+
+    token = (result[0])[0]
+    headers = {
+        'Authorization': 'token ' + token
+    }
+
+    response = {}
+    usrUrl = "https://api.github.com/user"
+    res = requests.get(url=usrUrl, headers=headers)
+    res = res.json()
+    response['id'] = res['login']
+    response['followers'] = res['followers']
+    response['public_repos'] = res['public_repos']
+
+    repoUrl = f"https://api.github.com/users/{username}/repos"
+    res = requests.get(url=repoUrl, headers=headers)
+    repo_data = res.json()
+
+    lst = []
+    stars = 0
+    languages = {}
+    for repo in repo_data:
+        obj = {}
+        obj['name'] = repo['name']
+        obj['stars'] = repo['stargazers_count']
+        obj['language'] = repo['language']
+        obj['description'] = repo['description']
+        obj['forks_count'] = repo['forks_count']
+
+        key = repo['language']
+        if key is not None:
+            key = str(repo['language'])
+            if key in languages:
+                languages[key] += 1
+            else:
+                languages[key] = 0
+        stars += obj['stars']
+        lst.append(obj)
+
+    func = lambda item: item[1]
+    languages_list = [k for k, v in sorted(languages.items(), key=func)]
+    languages_list.reverse()
+    response['stars'] = stars
+    response['repo_data'] = lst
+    response['languages'] = languages_list
+
+    return response
 
 
 if __name__ == "__main__":
