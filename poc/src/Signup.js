@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import NavBar from "./components/Header";
 import { Button } from "react-bootstrap";
-import axios from 'axios';
+import axios from "axios";
 
 class Signup extends Component {
   constructor() {
@@ -33,7 +33,7 @@ class Signup extends Component {
       })
       .then((msg) => {
         console.log(msg);
-        this.props.history.push("/")
+        this.props.history.push("/");
         // if (msg.data.message === "success") {
         //   this.props.history.push("/dashboard");
         //   this.setState({ loggedin: true });
@@ -54,7 +54,7 @@ class Signup extends Component {
                 <div className="card-body">
                   <h5 className="card-title text-center">Sign Up</h5>
                   <form className="form-signin" onSubmit={this.handleSubmit}>
-                  <div className="form-label-group">  
+                    <div className="form-label-group">
                       <label>Name</label>
                       <input
                         type="text"

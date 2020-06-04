@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import NavBar from "./components/Header";
 import { Button } from "react-bootstrap";
-import axios from 'axios';
+import axios from "axios";
 
 
 class Login extends Component {
@@ -34,9 +34,9 @@ class Login extends Component {
       .then((msg) => {
         if (msg.data !== "Login failed") {
           this.props.history.push({
-            pathname: '/profile',
+            pathname: "/profile",
             username: this.state.username,
-            hasLinked: msg.data
+            hasLinked: msg.data,
           });
         } else {
           this.setState({ placeholder: msg.data });
@@ -45,8 +45,8 @@ class Login extends Component {
   };
 
   handleSignup = (event) => {
-    this.props.history.push('/signup')
-  }
+    this.props.history.push("/signup");
+  };
 
   render() {
     return (

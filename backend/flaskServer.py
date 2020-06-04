@@ -1,5 +1,7 @@
 from flask import Flask, request
 from flask_cors import CORS
+import sqlite3
+from sqlite3 import Error
 from Database import create_connection, execute_query, execute_read_query
 import json
 import requests
@@ -8,12 +10,12 @@ import linkedin_api
 
 app = Flask(__name__)
 CORS(app)
-api = linkedin_api.Linkedin('sat13mani@gmail.com', 'dustbin@123')
 
 
 @app.route("/username/<name>")
 def getProfile(name):
     print(name)
+    api = linkedin_api.Linkedin('sat13mani@gmail.com', 'dustbin@123')
     profile = api.get_profile(name)
     return profile
 
@@ -59,7 +61,7 @@ def data():
         query = f"INSERT INTO Token (g_username, token) VALUES {values}"
         execute_query(conn, query)
 
-        return f"your GitHub id - {str(git_id)} is linked to your profile, Login again"
+        return '<a href="#" onclick="window.close();">ID Linked, Click to close, Please Login again</a>'
 
     return str(res.json())
 
@@ -125,7 +127,7 @@ def checkLink(usr):
 
 
 @app.route('/getGitData/<username>')
-def sendData(username):
+def getGitData(username):
     # fetch access token for current username
     conn = create_connection('test.db')
     query = f"SELECT token from Token WHERE g_username='{username}'"
@@ -133,7 +135,7 @@ def sendData(username):
 
     token = (result[0])[0]
     headers = {
-        'Authorization': 'token ' + token
+        'Authorization': f"token {token}"
     }
 
     response = {}
@@ -169,7 +171,7 @@ def sendData(username):
         stars += obj['stars']
         lst.append(obj)
 
-    func = lambda item: item[1]
+    def func(item): return item[1]
     languages_list = [k for k, v in sorted(languages.items(), key=func)]
     languages_list.reverse()
     response['stars'] = stars
@@ -177,6 +179,142 @@ def sendData(username):
     response['languages'] = languages_list
 
     return response
+
+
+@app.route('/getRepoList/<username>')
+def getRepoList(username):
+    conn = create_connection('test.db')
+    query = f"SELECT token from Token WHERE g_username='{username}'"
+    result = execute_read_query(conn, query)
+
+    token = (result[0])[0]
+    headers = {
+        'Accept': 'application/vnd.github.nebula-preview+json',
+        'Authorization': f"token {token}"
+    }
+    url = "https://api.github.com/user/repos?direction=asc"
+    res = requests.get(url=url, headers=headers)
+    response = {}
+    response['repo_list'] = res.json()
+    return response
+
+
+@app.route('/getCommits/<username>/<repo_name>')
+def getCommits(username, repo_name):
+    # make a function for getting token
+    conn = create_connection('test.db')
+    query = f"SELECT token from Token WHERE g_username='{username}'"
+    result = execute_read_query(conn, query)
+    token = (result[0])[0]
+    headers = {
+        'Authorization': f"token {token}",
+        'author': username,
+    }
+
+    url = f"https://api.github.com/repos/{username}/{repo_name}/commits"
+    res = requests.get(url=url, headers=headers)
+    response = {}
+    res = res.json()
+    lst = []
+    for i in res:
+        commit = i['commit']
+        obj = {}
+        # cond = (commit['committer'])['name'] == username
+        # # cond = cond or (commit['author'])['name'] == username
+        # if cond:
+        obj['message'] = commit['message']
+        obj['url'] = commit['url']
+        lst.append(obj)
+
+    response['data'] = lst
+    return response
+
+
+@app.route('/highlight/contribution', methods=['POST'])
+def highlight():
+    conn = create_connection('test.db')
+    rqst_data = request.data
+    user_data = json.loads(rqst_data.decode('utf-8'))
+    print(user_data)
+    g_username = user_data['g_username']
+    rank = user_data['rank']
+    repo = user_data['repo']
+    sha = user_data['commit']
+    description = user_data['description']
+    # commit_name = commit_sha changes to be done in database
+    # GET /repos/:owner/:repo/git/commits/:commit_sha
+    query = f"SELECT token from Token WHERE g_username='{g_username}'"
+    result = execute_read_query(conn, query)
+    token = (result[0])[0]
+    headers = {'Authorization': f"token {token}"}
+    url = f"http://api.github.com/repos/{g_username}/{repo}/git/commits/{sha}"
+    res = requests.get(url=url, headers=headers)
+    print(res.json())
+    res = res.json()
+    author = (res['author'])['name']
+    message = res['message']
+    if (author == g_username):
+        query = f"UPDATE Commits SET g_username=?, rank=?, repo=?, message=?, sha=?, description=? WHERE g_username='{g_username}' AND rank={rank};"
+        try:
+            values = (g_username, rank, repo, message, sha, description)
+            print(values)
+            cur = conn.cursor()
+            cur.execute(query, values)
+            conn.commit()
+            return "successful"
+        except Error as e:
+            print(f"the db error {e} occurred")
+        finally:
+            conn.close()
+        return "failed"
+
+
+@app.route('/get/contribution/<username>')
+def checkContribution(username):
+    conn = create_connection('test.db')
+    query = f"SELECT * FROM Commits WHERE g_username='{username}'"
+    result = execute_read_query(conn, query)
+    print("result ", result)
+    response = {}
+
+    condition = True
+    for item in result:
+        condition = condition and (item[2] != "None")
+        break
+
+    if len(result) > 0 and condition:
+        lst = [item[1:] for item in result]
+        response['contributions'] = lst
+    elif len(result) > 0:
+        response['contributions'] = []
+    else:
+        for i in range(1, 4):
+            values = (username, i, "None", "None", "None", "None")
+            query = f"INSERT INTO Commits (g_username, rank, repo, message, sha, description) VALUES {values};"
+            execute_query(conn, query)
+        response['contributions'] = []
+    return response
+
+
+@app.route('/search/<keyword>')
+def searchKeyword(keyword):
+    '''
+    Gives the LinkedIn search for given keyword.
+    Limit imposed on no. of results - 10.
+    comment - need to document entire code.
+    '''
+    print(f"keyword - {keyword}")
+    params = {'keywords': str(keyword)}
+    api = linkedin_api.Linkedin('sat13mani@gmail.com', 'dustbin@123')
+    result = api.search(params, limit=10)
+    response = {}
+    response['result'] = result
+    return response
+
+
+@app.route('/test/')
+def test():
+    return "hello"
 
 
 if __name__ == "__main__":
