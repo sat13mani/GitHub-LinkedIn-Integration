@@ -74,7 +74,7 @@ class NavBar extends Component {
     }
     return (
       <Navbar bg="dark justify-content-between" variant="dark" sticky="top">
-        <Navbar.Brand>GitHub LinkedIn Integration</Navbar.Brand>
+        <Navbar.Brand href="/profile">GitHub LinkedIn Integration</Navbar.Brand>
         {extra}
       </Navbar>
     );

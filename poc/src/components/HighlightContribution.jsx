@@ -46,24 +46,24 @@ export default class HighlightContribution extends Component {
       .then((contributions) => {
         if (contributions.length > 0) {
           let div = contributions.map((item, idx) => {
-            
+
             if (item[2] !== "None") {
               let url = `https://github.com/${username}/${item[1]}/commit/${item[3]}`
               return (
                 <ListGroup.Item>
-                  <a href={url} style={{color: "inherit", textDecoration: "None"}}>
-                  <Row>
-                    <Col>
-                      <h5>
-                        {" "}
-                        {item[0]}. {item[1]}{" "}
-                      </h5>
-                      <h6> Message: {item[2]} </h6>
-                      <h6> <a href={url}> Link to commit </a> </h6>
-                      <hr className="my-4" />
-                      {item[4]}
-                    </Col>
-                  </Row>
+                  <a href={url} style={{ color: "inherit", textDecoration: "None" }}>
+                    <Row>
+                      <Col>
+                        <h5>
+                          {" "}
+                          {item[0]}. {item[1]}{" "}
+                        </h5>
+                        <h6> Message: {item[2]} </h6>
+                        <h6> <a href={url}> Link to commit </a> </h6>
+                        <hr className="my-4" />
+                        {item[4]}
+                      </Col>
+                    </Row>
                   </a>
                 </ListGroup.Item>
               );
@@ -84,7 +84,7 @@ export default class HighlightContribution extends Component {
             component_flag: 1,
           });
         } else {
-          this.setState({ component: <> </> });
+          this.setState({ component: <> Not Added</> });
         }
       });
   };
@@ -210,6 +210,11 @@ export default class HighlightContribution extends Component {
         <h6> Add / Edit Contribution </h6>{" "}
       </Fragment>
     );
+
+    if (this.props.mode === 0) {
+      create_button = <> </>;
+      form_div = <> </>;
+    }
 
     return (
       <>

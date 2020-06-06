@@ -65,7 +65,7 @@ export default class HighlightIssues extends Component {
                 component_flag: 1,
             });
         } else {
-            this.setState({ component: <> </> })
+            this.setState({ component: <> Not Added </> })
         }
     }
 
@@ -177,6 +177,11 @@ export default class HighlightIssues extends Component {
         );
 
         if (this.state.form_flag !== 1) {
+            form_component = <> </>;
+        }
+
+        if (this.props.mode === 0) {
+            create_button = <> </>;
             form_component = <> </>;
         }
 

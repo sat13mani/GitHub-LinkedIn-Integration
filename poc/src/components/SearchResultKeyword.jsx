@@ -1,8 +1,7 @@
-import React, { Component, Fragment } from "react";
+import React, { Component } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import NavBar from "./Header";
 import axios from "axios";
-import GitHubBasic from "./GitHubBasic";
 import {
     Row,
     Col,
@@ -10,9 +9,6 @@ import {
     ListGroup,
     Form,
     Button,
-    Popover,
-    OverlayTrigger,
-    Spinner,
     Modal,
 } from "react-bootstrap";
 
@@ -24,7 +20,7 @@ export default class SearchResultKeyword extends Component {
     };
 
     async componentDidMount() {
-        let keyword = this.props.location.keyword;
+        let keyword = (window.location.pathname).split("/")[3]
         let url = `http://localhost:5000/search/${keyword}`;
         axios
             .get(url)
@@ -181,7 +177,7 @@ export default class SearchResultKeyword extends Component {
 
     render() {
         return (
-            <>
+            <div>
                 <NavBar
                     loggedIn={true}
                     handleUsernameSearch={this.handleUsernameSearch}
@@ -273,7 +269,7 @@ export default class SearchResultKeyword extends Component {
                     </Col>
                     <Col xs={1}></Col>
                 </Row>
-            </>
+            </div>
         );
     }
 }

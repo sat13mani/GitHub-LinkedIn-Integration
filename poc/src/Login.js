@@ -16,6 +16,10 @@ class Login extends Component {
     };
   }
 
+  componentDidMount() {
+    localStorage.clear();
+  }
+
   handleChange = (event) => {
     event.preventDefault();
     const { name, value } = event.target;
@@ -33,6 +37,8 @@ class Login extends Component {
       })
       .then((msg) => {
         if (msg.data !== "Login failed") {
+          let username = this.state.username;
+          localStorage.setItem("username", username)
           this.props.history.push({
             pathname: "/profile",
             username: this.state.username,

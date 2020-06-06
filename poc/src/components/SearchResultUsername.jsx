@@ -5,12 +5,12 @@ import axios from "axios";
 import LinkedIn from "./LinkedIn";
 import GitHubBasic from "./GitHubBasic";
 import RepoList from "./RepoList";
+import HighlightContribution from "./HighlightContribution";
+import HighlightIssues from "./HighlightIssues";
+import HighlightPr from "./HighlightPr";
 import {
-  Container,
   Row,
   Col,
-  Card,
-  Button,
   Figure,
   Tab,
   Tabs,
@@ -25,15 +25,15 @@ export default class SearchResultUsername extends Component {
     linkedin_div: <h4> Loading... </h4>,
     github_div: <h4> Loading... </h4>,
     repo_list: "",
-    topCommit_div: <h4> Loading... </h4>,
+    topCommit_div: <h4> Not Added </h4>,
     flag: 0,
     hasLinked: 0,
     skills: "",
+    g_username: "",
   };
 
   componentDidMount() {
-    console.log("search component did mount");
-    let l_username = this.props.location.l_username;
+    let l_username = ((window.location.pathname).split("/"))[3];
     if (l_username) {
       this.setState({ l_username: l_username });
       this.checklink(l_username);
@@ -63,6 +63,7 @@ export default class SearchResultUsername extends Component {
       if (response !== 0) {
         let git_username = response;
         this.fetchGitHubData(git_username);
+        this.setState({ g_username: git_username })
       }
       this.fetchLinkedinData(l_username);
     });
@@ -73,7 +74,6 @@ export default class SearchResultUsername extends Component {
     axios.get(url).then((res) => {
       let git_data = res.data;
       this.setState({ git_data: git_data });
-      console.log("github data ", this.state.git_data);
       let git_div = <GitHubBasic git_data={this.state.git_data} />;
       let repo_list = <RepoList repo_data={this.state.git_data.repo_data} />;
       this.setState({ git_div: git_div, repo_list: repo_list });
@@ -87,7 +87,6 @@ export default class SearchResultUsername extends Component {
     axios.get(linkedin_url).then((res) => {
       let linkedin_data = res.data;
       this.setState({ linkedin_data: linkedin_data });
-      console.log("linkedin_data ", this.state.linkedin_data);
       let skills = [];
       let _ = linkedin_data.skills.map((item) => {
         skills.push(item.name);
@@ -113,13 +112,11 @@ export default class SearchResultUsername extends Component {
       .get(url)
       .then((res) => {
         let contributions = res.data.contributions;
-        console.log("res", contributions);
         this.setState({ contribution: contributions });
         return contributions;
       })
       .then((contributions) => {
         if (contributions.length > 0) {
-          console.log("getting over this");
           let div = contributions.map((item, idx) => {
             if (item[1] != "None") {
               return (
@@ -169,9 +166,22 @@ export default class SearchResultUsername extends Component {
     );
 
     let topCommit_div = (
-      <Tab eventKey="hLightContri" title="Top Commits">
-        <div className="container-fluid" style={{ marginTop: "20px" }} />
-        {this.state.topCommit_div}
+      <Tab eventKey="hLightContri" title="Top Contributions">
+        <Tabs>
+          <Tab eventKey="hLightCommits" title="Top Commits">
+            <HighlightContribution
+              username={this.state.g_username}
+              repo_data={this.state.git_data.repo_data}
+              mode={0}
+            />
+          </Tab>
+          <Tab eventKey="hLightIssues" title="Top Issues">
+            <HighlightIssues g_username={this.state.g_username} mode={0} />
+          </Tab>
+          <Tab eventKey="hLightpr" title="Top PR">
+            <HighlightPr g_username={this.state.g_username} mode={0} />
+          </Tab>
+        </Tabs>
       </Tab>
     );
     if (this.state.hasLinked != 1) {
@@ -179,11 +189,23 @@ export default class SearchResultUsername extends Component {
       topCommit_div = <> </>
     }
 
+    let l_username = localStorage.getItem("username");
+    let loggedIn = false;
+    if (l_username) {
+      loggedIn = true;
+    }
+
+    let id_component = <> </>;
+    if (this.state.g_username) {
+      let url = `https://github.com/${this.state.g_username}`;
+      id_component = <h6> GitHub - <a href={url}> {this.state.g_username}</a> </h6>
+    }
+
     return (
       <div style={{ overflow: "hidden" }}>
         <NavBar
-          loggedIn={true}
-          l_username={this.props.location.username}
+          loggedIn={loggedIn}
+          l_username={l_username}
           handleUsernameSearch={this.handleUsernameSearch}
           handleKeywordSearch={this.handleKeywordSearch}
         />
@@ -198,7 +220,7 @@ export default class SearchResultUsername extends Component {
                 alt="avatar"
                 src="https://picsum.photos/200/300/?blur=4"
               />
-              <Figure.Caption> {this.state.l_username} </Figure.Caption>
+              <Figure.Caption> {this.state.l_username} {id_component}</Figure.Caption>
             </Figure>
           </Col>
           <Col>

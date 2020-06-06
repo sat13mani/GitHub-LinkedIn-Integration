@@ -32,9 +32,15 @@ class Profile extends Component {
   };
 
   componentDidMount() {
-    this.setState({ username: this.props.location.username });
+    let username = localStorage.getItem("username")
+    
+    if (!username) {
+      this.props.history.push("/")
+    }
+
+    this.setState({ username: username });
     axios
-      .get(`http://localhost:5000/username/${this.props.location.username}`)
+      .get(`http://localhost:5000/username/${username}`)
       .then((msg) => {
         this.setState({
           linkedin_data: msg.data,
@@ -57,7 +63,7 @@ class Profile extends Component {
   }
 
   checkLink = () => {
-    let username = this.props.location.username;
+    let username = localStorage.getItem("username");
     let url = `http://localhost:5000/check/${username}`;
     axios.get(url).then((res) => {
       if (res.data !== 0) {
