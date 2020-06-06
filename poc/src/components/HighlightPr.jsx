@@ -8,7 +8,7 @@ export default class HighlightIssues extends Component {
     state = {
         rank: 1,
         repo_fullname: "",
-        issue_number: "",
+        pull_number: "",
         description: "",
         component: <> </>,
         component_flag: 0,
@@ -17,21 +17,21 @@ export default class HighlightIssues extends Component {
     };
 
     componentDidMount() {
-        this.fetchIssues();
+        this.fetchPr();
     }
 
-    fetchIssues = async () => {
+    fetchPr = async () => {
         let g_username = this.props.g_username;
-        let issues;
-        let url = `http://localhost:5000/get/issues/${g_username}`;
+        let pr;
+        let url = `http://localhost:5000/get/pr/${g_username}`;
         await axios.get(url).then((res) => {
-            issues = res.data.issues;
+            pr = res.data.pr;
         })
-        console.log(issues);
-        if (issues.length > 0) {
-            let div = issues.map((item) => {
+        console.log(pr);
+        if (pr.length > 0) {
+            let div = pr.map((item) => {
                 if (item[2] !== "None") {
-                    let url = `https://github.com/${item[2]}/issues/${item[3]}`;
+                    let url = `https://github.com/${item[2]}/pull/${item[3]}`;
                     return (
                         <ListGroup.Item>
                             <a href={url} style={{ color: "inherit", textDecoration: "None" }}>
@@ -41,7 +41,7 @@ export default class HighlightIssues extends Component {
                                             {item[2]}
                                         </h6>
                                         <h6> Title: {item[5]} <br /> {item[6]} </h6>
-                                        <h6> <a href={url}> Link to Issue </a> </h6>
+                                        <h6> <a href={url}> Link to Pr </a> </h6>
                                         <hr className="my-4" />
                                         {item[4]}
                                     </Col>
@@ -77,11 +77,11 @@ export default class HighlightIssues extends Component {
         event.preventDefault();
         // make a post request to backend
         // make one first
-        let url = "http://localhost:5000/highlight/issue";
+        let url = "http://localhost:5000/highlight/pr";
         axios.post(url, {
             rank: this.state.rank,
             repo_fullname: this.state.repo_fullname,
-            issue_number: this.state.issue_number,
+            pull_number: this.state.pull_number,
             description: this.state.description,
             g_username: this.props.g_username
         })
@@ -92,11 +92,11 @@ export default class HighlightIssues extends Component {
                     form_flag: 0,
                     description: "",
                     repo_fullname: "",
-                    issue_number: "",
+                    pull_number: "",
                     plus_square: 40,
                     rank: 1,
                 });
-                this.fetchIssues();
+                this.fetchPr();
             })
     }
 
@@ -149,10 +149,10 @@ export default class HighlightIssues extends Component {
                     />
                 </Form.Group>
                 <Form.Group controlId="exampleForm.ControlTextarea1">
-                    <Form.Label>Issue Number </Form.Label>
+                    <Form.Label>Pull Number </Form.Label>
                     <Form.Control
-                        name="issue_number"
-                        value={this.state.issue_number}
+                        name="pull_number"
+                        value={this.state.pull_number}
                         onChange={this.handleChange}
                     />
                 </Form.Group>

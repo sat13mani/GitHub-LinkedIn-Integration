@@ -47,7 +47,7 @@ export default class HighlightContribution extends Component {
         if (contributions.length > 0) {
           let div = contributions.map((item, idx) => {
             
-            if (item[1] !== "None") {
+            if (item[2] !== "None") {
               let url = `https://github.com/${username}/${item[1]}/commit/${item[3]}`
               return (
                 <ListGroup.Item>

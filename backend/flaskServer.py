@@ -6,6 +6,7 @@ from Database import create_connection, execute_query, execute_read_query
 import json
 import requests
 import linkedin_api
+import pprint
 
 
 app = Flask(__name__)
@@ -315,6 +316,147 @@ def searchKeyword(keyword):
 @app.route('/test/')
 def test():
     return "hello"
+
+@app.route('/highlight/issue', methods=['POST'])
+def highlightIssues():
+    conn = create_connection('test.db')
+    rqst_data = request.data
+    user_data = json.loads(rqst_data.decode('utf-8'))
+    rank = user_data['rank']
+    repo_fullname = user_data['repo_fullname']
+    issue_number = user_data['issue_number']
+    description = user_data['description']
+    g_username = user_data['g_username']
+    print("user data ", user_data)
+
+    query = f"SELECT token from Token WHERE g_username='{g_username}'"
+    result = execute_read_query(conn, query)
+    token = (result[0])[0]
+    headers = { 'Authorization': f"token {token}",}
+    base_url = "https://api.github.com"
+    path = f"/repos/{repo_fullname}/issues/{issue_number}"
+    url = base_url + path
+
+    res = requests.get(url=url, headers=headers)
+    r = res.json()
+    try:
+        title, body, login = r['title'], r['body'], (r['user'])['login']
+    except:
+        return "Wrong details"
+    
+    if login != g_username:
+        print("issue is not created by user")
+        return "Issue is not created by user"
+
+    query = f"UPDATE Issue SET repo_fullname=?, issue_number=?, description=?, title=?, body=? WHERE g_username='{g_username}' AND rank={rank}"
+    try:
+        print("in try")
+        values = (repo_fullname, issue_number, description, title, body)
+        print(values)
+        print(f"type of rank {type(rank)}")
+        cur = conn.cursor()
+        cur.execute(query, values)
+        conn.commit()
+        print("query executed successfully")
+        return "successful"
+    except Error as err:
+        print(f"Error at /highlight/issue - {err}")
+        return "failed"
+    finally:
+        conn.close()
+
+@app.route('/get/issues/<username>')
+def getIssues(username):
+    conn = create_connection('test.db')
+    query = f"SELECT * FROM Issue WHERE g_username='{username}'"
+    result = execute_read_query(conn, query)
+    response = {}
+    condition = True
+    for item in result:
+        condition = condition and (item[2] != "None")
+        break
+
+    if len(result) > 0 and condition:
+        response['issues'] = result
+    elif len(result) > 0:
+        response['issues'] = []
+    else:
+        for i in range(1, 4):
+            values = (username, i, "None", "None", "None", "None", "None")
+            query = f"INSERT INTO Issue (g_username, rank, repo_fullname, issue_number, description, title, body) VALUES {values};"
+            execute_query(conn, query)
+        response['issues'] = []
+    return response
+
+
+@app.route('/highlight/pr', methods=['POST'])
+def highlightPr():
+    conn = create_connection('test.db')
+    rqst_data = request.data
+    user_data = json.loads(rqst_data.decode('utf-8'))
+    g_username = user_data['g_username']
+    rank = user_data['rank']
+    repo_fullname = user_data['repo_fullname']
+    pull_number = user_data['pull_number']
+    description = user_data['description']
+
+    query = f"SELECT token from Token WHERE g_username='{g_username}'"
+    result = execute_read_query(conn, query)
+    token = (result[0])[0]
+    headers = { 'Authorization': f"token {token}",}
+    base_url = "https://api.github.com"
+    path = f"/repos/{repo_fullname}/pulls/{pull_number}"
+    url = base_url + path
+    res = requests.get(url=url, headers=headers)
+    res = res.json()
+
+    try:
+        title, body, login = res['title'], res['body'], (res['user'])['login']
+    except:
+        return "Wrong details"
+
+    if login != g_username:
+        print("issue is not created by user")
+        return "Issue is not created by user"
+
+    query = f"UPDATE PR SET repo_fullname=?, pull_number=?, description=?, title=?, body=? WHERE g_username='{g_username}' AND rank={rank}"
+    try:
+        values = (repo_fullname, pull_number, description, title, body)
+        print(values)
+        cur = conn.cursor()
+        cur.execute(query, values)
+        conn.commit()
+        print("query executed successfully")
+        return "successful"
+    except Error as err:
+        print(f"Error at /highlight/pr - {err}")
+        return "failed"
+    finally:
+        conn.close()
+
+
+@app.route('/get/pr/<username>')
+def getPr(username):
+    conn = create_connection('test.db')
+    query = f"SELECT * FROM PR WHERE g_username='{username}'"
+    result = execute_read_query(conn, query)
+    response = {}
+    condition = True
+    for item in result:
+        condition = condition and (item[2] != "None")
+        break
+
+    if len(result) > 0 and condition:
+        response['pr'] = result
+    elif len(result) > 0:
+        response['pr'] = []
+    else:
+        for i in range(1, 4):
+            values = (username, i, "None", "None", "None", "None", "None")
+            query = f"INSERT INTO PR (g_username, rank, repo_fullname, pull_number, description, title, body) VALUES {values};"
+            execute_query(conn, query)
+        response['pr'] = []
+    return response
 
 
 if __name__ == "__main__":

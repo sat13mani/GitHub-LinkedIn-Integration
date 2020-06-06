@@ -5,6 +5,8 @@ import LinkedIn from "./LinkedIn";
 import GitHubBasic from "./GitHubBasic";
 import RepoList from "./RepoList";
 import HighlightContribution from "./HighlightContribution";
+import HighlightIssues from "./HighlightIssues";
+import HighlightPr from "./HighlightPr";
 import {
   Container,
   Row,
@@ -197,18 +199,28 @@ class Profile extends Component {
                   </Row>
                 </Tab>
               ) : (
-                <Tab />
-              )}
+                  <Tab />
+                )}
               {this.state.is_git_available ? (
-                <Tab eventKey="hLightContri" title="Top Commits">
-                  <HighlightContribution
-                    username={this.state.git_id}
-                    repo_data={this.state.git_data.repo_data}
-                  />
+                <Tab eventKey="hLightContri" title="Top Contributions">
+                  <Tabs>
+                    <Tab eventKey="hLightCommits" title="Top Commits">
+                      <HighlightContribution
+                        username={this.state.git_id}
+                        repo_data={this.state.git_data.repo_data}
+                      />
+                    </Tab>
+                    <Tab eventKey="hLightIssues" title="Top Issues">
+                      <HighlightIssues g_username={this.state.git_id}/>
+                    </Tab>
+                    <Tab eventKey="hLightpr" title="Top PR">
+                      <HighlightPr g_username={this.state.git_id}/>
+                    </Tab>
+                  </Tabs>
                 </Tab>
               ) : (
-                <Tab />
-              )}
+                  <Tab />
+                )}
             </Tabs>
           </Col>
           <Col xs={1} />
