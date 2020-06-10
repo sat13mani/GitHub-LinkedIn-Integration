@@ -17,6 +17,10 @@ export default class SearchResultKeyword extends Component {
         search_result: <h1> Loading, Please be patient </h1>,
         raw_result: [],
         modal_data: <h1> Loading .. </h1>,
+        linked_users: [],
+        repo_filter: "",
+        stars_filter: "",
+        languages: "",
     };
 
     async componentDidMount() {
@@ -26,6 +30,7 @@ export default class SearchResultKeyword extends Component {
             .get(url)
             .then(async (res) => {
                 let lst = res.data.result;
+                let linked_users = [];
                 for (var i = 0; i < lst.length; i++) {
                     let idx = i,
                         item = lst[i];
@@ -43,6 +48,7 @@ export default class SearchResultKeyword extends Component {
                             if (res.data !== 0) {
                                 g_username = res.data;
                                 hasLinked = 1;
+                                linked_users.push(g_username);
                             }
                         })
                         .then(() => {
@@ -55,6 +61,8 @@ export default class SearchResultKeyword extends Component {
                             this.setState({ raw_result: temp });
                         });
                 }
+                this.setState({ linked_users: linked_users })
+                console.log(linked_users)
             })
             .then(async () => {
                 let temp = await this.cardFormation(this.state.raw_result);
@@ -76,7 +84,6 @@ export default class SearchResultKeyword extends Component {
 
             axios.get(chk_url).then((res) => {
                 git_data = res.data;
-                let results
                 let div = (
                     <p>
                         Public Repos - {git_data.public_repos} <br />
@@ -167,6 +174,10 @@ export default class SearchResultKeyword extends Component {
         });
     };
 
+    handleChange = (event) => {
+        this.setState({ [event.target.name]: event.target.value })
+    }
+
     handleKeywordSearch = (keyword) => {
         let path = `/search/keyword/${keyword}`;
         this.props.history.push({
@@ -174,6 +185,37 @@ export default class SearchResultKeyword extends Component {
             keyword: keyword,
         });
     };
+
+    handleFilter = (event) => {
+        event.preventDefault();
+        let url = `http://localhost:5000/filter`;
+        axios.post(url, {
+            'list': this.state.linked_users,
+            'repo_filter': this.state.repo_filter,
+            'stars_filter': this.state.stars_filter,
+            'languages': this.state.languages
+        }).then(async (res) => {
+            const {result} = res.data;
+            let set = new Set();
+            for (var i = 0; i < result.length; i++) {
+                set.add(result[i])
+            }
+            console.log(set)
+            let rr = this.state.raw_result;
+            let lst = [];
+            for (i = 0; i < rr.length; i++) {
+                if (rr[i].hasLinked) {
+                    if (set.has(rr[i].g_username)) {
+                        lst.push(rr[i])
+                    }
+                }
+            }
+            let temp = await this.cardFormation(lst);
+            temp = <ListGroup> {temp} </ListGroup>;
+            console.log(temp);
+            this.setState({ search_result: temp });
+        })
+    }
 
     render() {
         return (
@@ -192,6 +234,7 @@ export default class SearchResultKeyword extends Component {
                     <Col xs={7}>{this.state.search_result}</Col>
                     <Col xs={3} className="text-center">
                         <h4>GitHub Filters </h4>
+                        gt: greater than eq: equals
                         <div
                             className="container-fluid"
                             style={{ marginTop: "20px" }}
@@ -209,18 +252,11 @@ export default class SearchResultKeyword extends Component {
                                         controlId="formGridEmail"
                                     >
                                         <Form.Control
+                                            name="repo_filter"
+                                            value={this.state.repo_filter}
                                             type="text"
-                                            placeholder="Low"
-                                        />
-                                    </Form.Group>
-                                    -
-                                    <Form.Group
-                                        as={Col}
-                                        controlId="formGridPassword"
-                                    >
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="High"
+                                            placeholder="gt10, lt10, bt10 20"
+                                            onChange={this.handleChange}
                                         />
                                     </Form.Group>
                                 </Form.Row>
@@ -236,32 +272,30 @@ export default class SearchResultKeyword extends Component {
                                         controlId="formGridEmail"
                                     >
                                         <Form.Control
+                                            name="stars_filter"
+                                            value={this.state.stars_filter}
                                             type="text"
-                                            placeholder="Low"
-                                        />
-                                    </Form.Group>
-                                    -
-                                    <Form.Group
-                                        as={Col}
-                                        controlId="formGridPassword"
-                                    >
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="High"
+                                            placeholder="gt10, lt10, bt10 20"
+                                            onChange={this.handleChange}
                                         />
                                     </Form.Group>
                                 </Form.Row>
-                                <Form.Group as={Col} controlId="formGridState">
-                                    <Form.Label>Languages</Form.Label>
-                                    <Form.Control
-                                        as="select"
-                                        defaultValue="Choose..."
+                                <Form.Row>
+                                    Languages &nbsp; &nbsp;&nbsp; &nbsp;
+                                    <Form.Group
+                                        as={Col}
+                                        controlId="formGridEmail"
                                     >
-                                        <option>Choose...</option>
-                                        <option>...</option>
-                                    </Form.Control>
-                                </Form.Group>
-                                <Button variant="primary" type="submit">
+                                        <Form.Control
+                                            name="languages"
+                                            value={this.state.languages}
+                                            type="text"
+                                            placeholder="gt10, lt10, bt10 20"
+                                            onChange={this.handleChange}
+                                        />
+                                    </Form.Group>
+                                </Form.Row>
+                                <Button variant="primary" type="submit" onClick={this.handleFilter}>
                                     Apply
                                 </Button>
                             </Form>

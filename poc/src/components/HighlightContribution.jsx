@@ -32,7 +32,6 @@ export default class HighlightContribution extends Component {
   }
 
   checkContribution = () => {
-    console.log("called");
     let username = this.props.username;
     let url = `http://localhost:5000/get/contribution/${username}`;
     axios

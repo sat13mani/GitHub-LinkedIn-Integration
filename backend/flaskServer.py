@@ -62,6 +62,11 @@ def data():
         query = f"INSERT INTO Token (g_username, token) VALUES {values}"
         execute_query(conn, query)
 
+        # create new queries here
+        # fetch git data and cache
+
+        cache(git_id)
+
         return '<a href="#" onclick="window.close();">ID Linked, Click to close, Please Login again</a>'
 
     return str(res.json())
@@ -457,6 +462,123 @@ def getPr(username):
             execute_query(conn, query)
         response['pr'] = []
     return response
+
+
+@app.route('/payload', methods=['POST'])
+def getData():
+    rqst_data = request.data
+    print(rqst_data)
+    return "hello"
+
+
+def cache(g_username):
+    results = getGitData(g_username)
+    print(results)
+
+    conn = create_connection('test.db')
+    # cache profile details
+    stars = results['stars']
+    repos = results['public_repos']
+    followers = results['followers']
+    values = (g_username, repos, followers, stars)
+    query = f"INSERT INTO GitHub (g_username, repos, followers, stars) VALUES {values}"
+    execute_query(conn, query)
+
+    language_lst = str(results['languages'])
+    values = (g_username, language_lst)
+    query = f"INSERT INTO Language (g_username, language) VALUES {values}"
+    execute_query(conn, query)
+    return results
+
+
+@app.route('/filter', methods=['POST'])
+def filter():
+    filter_data = request.get_json(force=True)
+    usr_lst = (filter_data['list'])
+    usr_lst.append('temp')
+    repo_filter = filter_data['repo_filter']
+    stars_filter = filter_data['stars_filter']
+    language = filter_data['languages']
+    language = language.split(';')
+
+    print(usr_lst, type(usr_lst))
+    print(repo_filter)
+    print(stars_filter)
+    print(language)
+
+    if repo_filter == "":
+        repo_filter = ">0"
+    
+    if stars_filter == "":
+        stars_filter = ">0"
+
+    repos = getOp(repo_filter, "repos")
+    stars = getOp(stars_filter, "stars")
+
+    usr_lst = tuple(i for i in usr_lst)
+    conn = create_connection('test.db')
+    query = f"SELECT g_username FROM GitHub WHERE g_username in {usr_lst}"
+    query += f" AND {repos} AND {stars}"
+
+    print(query)
+    lst = execute_read_query(conn, query)
+    rslt = []
+    for item in lst:
+        rslt.append(item[0])
+    
+    print(rslt)
+    print(language, len(language))
+
+    if (len(language) > 0):
+        filtered_rslt = []
+        for i in rslt:
+            query = f"SELECT language FROM Language WHERE g_username = '{i}';"
+            usr_lang = execute_read_query(conn, query)
+            if (len(usr_lang) > 0):
+                print(usr_lang[0][0][1:-1])
+                res = usr_lang[0][0][1:-1]
+                res = (res).split(', ')
+                res = [i[1:-1] for i in res]
+                print("res ", res)
+                cond = True
+                for lang in language:
+                    print("lang", lang)
+                    if lang in res:
+                        cond = cond and True
+                    elif lang == '':
+                        continue
+                    else:
+                        cond = cond and False
+                    print("cons", cond)
+                if cond:
+                    filtered_rslt.append(i)
+    else:
+        filtered_rslt = rslt
+
+    print("filtered_rslt", filtered_rslt)
+    response = {}
+    response['result'] = filtered_rslt
+    return response
+
+
+def getOp(filter, name):
+    result = f"{name} "
+    if 'gt' in filter:
+        result += ">"
+    elif 'lt' in filter:
+        result += "<"
+    elif 'eq' in filter:
+        result += "="
+    result += filter[2:]
+
+    if 'bt' in filter:
+        result = f"{name} "
+        value = filter.split(' ')
+        low = value[0][2:]
+        high = value[1]
+        result += f"BETWEEN {low} AND {high}"
+    print(result)
+    return result
 
 
 if __name__ == "__main__":
