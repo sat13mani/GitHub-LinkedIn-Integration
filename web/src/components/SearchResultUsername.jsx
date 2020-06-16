@@ -5,7 +5,7 @@ import axios from "axios";
 import LinkedIn from "./LinkedIn";
 import GitHubBasic from "./GitHubBasic";
 import RepoList from "./RepoList";
-import HighlightContribution from "./HighlightContribution";
+import HighlightCommit from "./HighlightCommit";
 import HighlightIssues from "./HighlightIssues";
 import HighlightPr from "./HighlightPr";
 import {
@@ -88,8 +88,8 @@ export default class SearchResultUsername extends Component {
       let linkedin_data = res.data;
       this.setState({ linkedin_data: linkedin_data });
       let skills = [];
-      let _ = linkedin_data.skills.map((item) => {
-        skills.push(item.name);
+      linkedin_data.skills.map((item) => {
+        return skills.push(item.name);
       });
       this.setState({ skills: skills });
       let skill_list = this.state.skills.map((item, idx) => {
@@ -118,7 +118,7 @@ export default class SearchResultUsername extends Component {
       .then((contributions) => {
         if (contributions.length > 0) {
           let div = contributions.map((item, idx) => {
-            if (item[1] != "None") {
+            if (item[1] !== "None") {
               return (
                 <ListGroup.Item>
                   <Row>
@@ -134,6 +134,8 @@ export default class SearchResultUsername extends Component {
                   </Row>
                 </ListGroup.Item>
               );
+            } else {
+              return null;
             }
           });
 
@@ -169,7 +171,7 @@ export default class SearchResultUsername extends Component {
       <Tab eventKey="hLightContri" title="Top Contributions">
         <Tabs>
           <Tab eventKey="hLightCommits" title="Top Commits">
-            <HighlightContribution
+            <HighlightCommit
               username={this.state.g_username}
               repo_data={this.state.git_data.repo_data}
               mode={0}
@@ -184,7 +186,7 @@ export default class SearchResultUsername extends Component {
         </Tabs>
       </Tab>
     );
-    if (this.state.hasLinked != 1) {
+    if (this.state.hasLinked !== 1) {
       git_div = <> </>;
       topCommit_div = <> </>
     }

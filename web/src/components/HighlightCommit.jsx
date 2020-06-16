@@ -10,7 +10,7 @@ import {
 import axios from "axios";
 import { PlusSquareFill } from "react-bootstrap-icons";
 
-export default class HighlightContribution extends Component {
+export default class HighlightCommit extends Component {
   state = {
     rank: 1,
     drp_dwn1: "",
@@ -33,7 +33,7 @@ export default class HighlightContribution extends Component {
 
   checkContribution = () => {
     let username = this.props.username;
-    let url = `http://localhost:5000/get/contribution/${username}`;
+    let url = `http://localhost:5000/get/commit/${username}`;
     axios
       .get(url)
       .then((res) => {
@@ -66,6 +66,8 @@ export default class HighlightContribution extends Component {
                   </a>
                 </ListGroup.Item>
               );
+            } else {
+              return null;
             }
           });
 
@@ -106,7 +108,7 @@ export default class HighlightContribution extends Component {
   handleSubmit = (event) => {
     event.preventDefault();
     this.setState({ submit_placeholder: "submitting", isSubmitting: true });
-    let url = "http://localhost:5000/highlight/contribution";
+    let url = "http://localhost:5000/highlight/commit";
     axios
       .post(url, {
         g_username: this.props.username,

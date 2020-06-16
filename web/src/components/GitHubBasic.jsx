@@ -1,6 +1,5 @@
 import React, { Fragment, Component } from "react";
-import { Container, Row, Col, Card, Button, ListGroup } from "react-bootstrap";
-import RepoList from "./RepoList";
+import { Row, Col, ListGroup } from "react-bootstrap";
 
 export default class GitHubBasic extends Component {
   render() {

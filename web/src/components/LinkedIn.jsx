@@ -1,5 +1,5 @@
 import React, { Fragment, Component } from "react";
-import { Container, Row, Col, Card, Button, ListGroup } from "react-bootstrap";
+import { Card, ListGroup } from "react-bootstrap";
 
 export default class LinkedIn extends Component {
   render() {

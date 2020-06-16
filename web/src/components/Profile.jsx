@@ -4,14 +4,12 @@ import NavBar from "./Header";
 import LinkedIn from "./LinkedIn";
 import GitHubBasic from "./GitHubBasic";
 import RepoList from "./RepoList";
-import HighlightContribution from "./HighlightContribution";
+import HighlightCommit from "./HighlightCommit";
 import HighlightIssues from "./HighlightIssues";
 import HighlightPr from "./HighlightPr";
 import {
-  Container,
   Row,
   Col,
-  Card,
   Button,
   Figure,
   Tab,
@@ -48,8 +46,8 @@ class Profile extends Component {
         });
 
         let skills = [];
-        let _ = msg.data.skills.map((item) => {
-          skills.push(item.name);
+        msg.data.skills.map((item) => {
+          return skills.push(item.name);
         });
         this.setState({ skills: skills });
         let skill_list = this.state.skills.map((item, idx) => {
@@ -86,13 +84,9 @@ class Profile extends Component {
     let base_url = `https://github.com/login/oauth/authorize`;
     let query = `?client_id=Iv1.6a23a85edae7274a&state=${this.state.username}`;
     let url = base_url + query;
-    let ref;
     let windowFeatures =
       "menubar=no,resizable=yes,scrollbars=yes,status=yes, width=800, height=800";
-    ref = window.open(url, "Login", windowFeatures);
-    // let base = "http://localhost:5000";
-    // while (base != ref.location.origin);
-    // ref.close();
+    window.open(url, "Login", windowFeatures);
   };
 
   handleUsernameSearch = (username) => {
@@ -211,7 +205,7 @@ class Profile extends Component {
                 <Tab eventKey="hLightContri" title="Top Contributions">
                   <Tabs>
                     <Tab eventKey="hLightCommits" title="Top Commits">
-                      <HighlightContribution
+                      <HighlightCommit
                         username={this.state.git_id}
                         repo_data={this.state.git_data.repo_data}
                       />
